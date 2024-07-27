@@ -52,6 +52,11 @@ func main() {
 	router := http.NewServeMux()
 
 	router.HandleFunc("POST /users", handler.CreateUser)
+	router.HandleFunc("PATCH /users", handler.UpdateUser)
+	router.HandleFunc("DELETE /users/{user_id}", handler.DeleteUser)
+
+	router.HandleFunc("POST /work/start", handler.StartWork)
+	router.HandleFunc("POST /work/finish", handler.FinishWork)
 
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%d", cfg.Port),

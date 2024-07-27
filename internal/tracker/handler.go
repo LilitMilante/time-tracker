@@ -2,9 +2,12 @@ package tracker
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/gofrs/uuid"
 )
 
 type Handler struct {
@@ -18,6 +21,8 @@ func NewHandler(s *Service) *Handler {
 type PassportNumber struct {
 	PassportNumber string `json:"passportNumber"`
 }
+
+// User methods
 
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -61,6 +66,99 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	err = h.s.CreateUser(ctx, passportSeries, passportNumber)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var updUser UpdateUser
+
+	err := json.NewDecoder(r.Body).Decode(&updUser)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.s.UpdateUser(ctx, updUser)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := uuid.FromString(r.PathValue("user_id"))
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.s.DeleteUser(ctx, id)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// task methods
+
+func (h *Handler) StartWork(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var wh WorkHours
+
+	err := json.NewDecoder(r.Body).Decode(&wh)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.s.StartWork(ctx, wh)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) FinishWork(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var wh WorkHours
+
+	err := json.NewDecoder(r.Body).Decode(&wh)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.s.FinishWork(ctx, wh)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

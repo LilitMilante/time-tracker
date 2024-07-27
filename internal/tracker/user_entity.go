@@ -1,6 +1,8 @@
 package tracker
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
 )
 
@@ -12,4 +14,15 @@ type User struct {
 	Name           string    `json:"name"`
 	Patronymic     string    `json:"patronymic"`
 	Address        string    `json:"address"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type UpdateUser struct {
+	ID             uuid.UUID `json:"id"`
+	PassportSeries *int      `json:"passport_series"`
+	PassportNumber *int      `json:"passport_number"`
+	Surname        *string   `json:"surname"`
+	Name           *string   `json:"name"`
+	Patronymic     *string   `json:"patronymic"`
+	Address        *string   `json:"address"`
 }

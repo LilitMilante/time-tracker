@@ -5,6 +5,7 @@ go 1.22
 require (
 	github.com/caarlos0/env/v7 v7.1.0
 	github.com/gofrs/uuid v4.4.0+incompatible
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/pressly/goose/v3 v3.21.1
