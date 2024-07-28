@@ -13,3 +13,9 @@ type WorkHours struct {
 	FinishedAt   *time.Time `json:"finished_at"`
 	SpendTimeSec int        `json:"spend_time_sec"`
 }
+
+type TaskSpendTime struct {
+	UserID       uuid.UUID `json:"user_id"`
+	TaskID       uuid.UUID `json:"task_id"`
+	SpendTimeSec int       `json:"spend_time_sec"`
+}

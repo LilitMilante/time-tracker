@@ -54,6 +54,7 @@ func main() {
 	router.HandleFunc("POST /users", handler.CreateUser)
 	router.HandleFunc("PATCH /users", handler.UpdateUser)
 	router.HandleFunc("DELETE /users/{user_id}", handler.DeleteUser)
+	router.HandleFunc("GET /users/{user_id}/report", handler.TaskSpendTimesByUser)
 
 	router.HandleFunc("POST /work/start", handler.StartWork)
 	router.HandleFunc("POST /work/finish", handler.FinishWork)

@@ -22,8 +22,6 @@ type PassportNumber struct {
 	PassportNumber string `json:"passportNumber"`
 }
 
-// User methods
-
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -104,7 +102,6 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	id, err := uuid.FromString(r.PathValue("user_id"))
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -121,44 +118,79 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// task methods
+type StartWorkRequest struct {
+	UserID uuid.UUID `json:"user_id"`
+	TaskID uuid.UUID `json:"task_id"`
+}
 
 func (h *Handler) StartWork(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var wh WorkHours
+	var req StartWorkRequest
 
-	err := json.NewDecoder(r.Body).Decode(&wh)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = h.s.StartWork(ctx, wh)
+	err = h.s.StartWork(ctx, req.UserID, req.TaskID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
+type FinishWorkRequest struct {
+	UserID uuid.UUID `json:"user_id"`
+	TaskID uuid.UUID `json:"task_id"`
+}
+
 func (h *Handler) FinishWork(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var wh WorkHours
+	var req FinishWorkRequest
 
-	err := json.NewDecoder(r.Body).Decode(&wh)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = h.s.FinishWork(ctx, wh)
+	err = h.s.FinishWork(ctx, req.UserID, req.TaskID)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) TaskSpendTimesByUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := uuid.FromString(r.PathValue("user_id"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	spendTimesByUser, err := h.s.TaskSpendTimesByUser(ctx, id)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(spendTimesByUser)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

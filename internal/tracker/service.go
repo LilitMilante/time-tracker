@@ -92,8 +92,8 @@ func (s *Service) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return s.repo.DeleteUser(ctx, id, time.Now())
 }
 
-func (s *Service) StartWork(ctx context.Context, wh WorkHours) error {
-	_, err := s.repo.NotFinishedWorkHours(ctx, wh.UserID, wh.TaskID)
+func (s *Service) StartWork(ctx context.Context, userID, taskID uuid.UUID) error {
+	_, err := s.repo.NotFinishedWorkHours(ctx, userID, taskID)
 	if err == nil {
 		return ErrWorkAlreadyStarted
 	}
@@ -102,12 +102,17 @@ func (s *Service) StartWork(ctx context.Context, wh WorkHours) error {
 		return err
 	}
 
-	wh.StartedAt = time.Now()
+	wh := WorkHours{
+		UserID:    userID,
+		TaskID:    taskID,
+		StartedAt: time.Now(),
+	}
+
 	return s.repo.StartWork(ctx, wh)
 }
 
-func (s *Service) FinishWork(ctx context.Context, wh WorkHours) error {
-	wh, err := s.repo.NotFinishedWorkHours(ctx, wh.UserID, wh.TaskID)
+func (s *Service) FinishWork(ctx context.Context, userID, taskID uuid.UUID) error {
+	wh, err := s.repo.NotFinishedWorkHours(ctx, userID, taskID)
 	if err != nil {
 		return err
 	}
@@ -122,4 +127,17 @@ func (s *Service) FinishWork(ctx context.Context, wh WorkHours) error {
 	}
 
 	return nil
+}
+
+func (s *Service) TaskSpendTimesByUser(ctx context.Context, id uuid.UUID) ([]TaskSpendTime, error) {
+	spendTimesByUser, err := s.repo.TaskSpendTimesByUser(ctx, id)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return nil, ErrNotFound
+		}
+
+		return nil, err
+	}
+
+	return spendTimesByUser, nil
 }

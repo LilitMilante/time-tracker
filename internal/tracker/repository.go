@@ -163,3 +163,37 @@ WHERE user_id = $1 AND task_id = $2 AND finished_at ISNULL`
 
 	return wh, nil
 }
+
+func (r *Repository) TaskSpendTimesByUser(ctx context.Context, id uuid.UUID) ([]TaskSpendTime, error) {
+	q := `
+SELECT task_id, SUM(spend_time_sec) FROM work_hours 
+WHERE user_id = $1 AND finished_at IS NOT NULL
+GROUP BY task_id
+`
+
+	rows, err := r.db.Query(ctx, q, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var taskSpendTimes []TaskSpendTime
+
+	for rows.Next() {
+		var taskSpendTime TaskSpendTime
+
+		err = rows.Scan(
+			&taskSpendTime.TaskID,
+			&taskSpendTime.SpendTimeSec,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		taskSpendTime.UserID = id
+
+		taskSpendTimes = append(taskSpendTimes, taskSpendTime)
+	}
+
+	return taskSpendTimes, rows.Err()
+}
