@@ -26,3 +26,13 @@ type UpdateUser struct {
 	Patronymic     *string   `json:"patronymic"`
 	Address        *string   `json:"address"`
 }
+
+type UserFilter struct {
+	ID             *uuid.UUID
+	PassportSeries *int
+	PassportNumber *int
+	Surname        *string
+	Name           *string
+	Patronymic     *string
+	Address        *string
+}

@@ -198,18 +198,18 @@ GROUP BY task_id ORDER BY sum_spend_time_sec DESC
 	return taskSpendTimes, rows.Err()
 }
 
-func (r *Repository) Users(ctx context.Context, page, perPage int) ([]User, error) {
+func (r *Repository) Users(ctx context.Context, page, perPage int, filter UserFilter) ([]User, error) {
 	offset := 0
 	if page > 1 {
 		offset = (page - 1) * perPage
 	}
 
-	q := `
-SELECT id, passport_series, passport_number, surname, name, patronymic, address, created_at
-FROM users WHERE deleted_at ISNULL ORDER BY created_at DESC OFFSET $1 LIMIT $2
-`
+	filterStr, filterArgs := setFilter(filter)
 
-	rows, err := r.db.Query(ctx, q, offset, perPage)
+	q := fmt.Sprintf(`SELECT id, passport_series, passport_number, surname, name, patronymic, address, created_at
+FROM users WHERE %s deleted_at ISNULL ORDER BY created_at DESC OFFSET %d LIMIT %d`, filterStr, offset, perPage)
+
+	rows, err := r.db.Query(ctx, q, filterArgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -237,4 +237,36 @@ FROM users WHERE deleted_at ISNULL ORDER BY created_at DESC OFFSET $1 LIMIT $2
 	}
 
 	return users, rows.Err()
+}
+
+func setFilter(filter UserFilter) (string, []any) {
+	var q string
+	var args []any
+
+	if filter.ID != nil {
+		q = fmt.Sprintf("id = '%s' AND", filter.ID)
+	}
+	if filter.PassportSeries != nil {
+		q = fmt.Sprintf("passport_series = %d AND", *filter.PassportSeries)
+	}
+	if filter.PassportNumber != nil {
+		q = fmt.Sprintf("passport_number = %d AND", *filter.PassportNumber)
+	}
+	if filter.Surname != nil {
+		args = append(args, *filter.Surname)
+		q = fmt.Sprintf("surname = $%d AND", len(args))
+	}
+	if filter.Name != nil {
+		args = append(args, *filter.Name)
+		q = fmt.Sprintf("name = $%d AND", len(args))
+	}
+	if filter.Patronymic != nil {
+		args = append(args, *filter.Patronymic)
+		q = fmt.Sprintf("patronymic = $%d AND", len(args))
+	}
+	if filter.Address != nil {
+		args = append(args, *filter.Address)
+		q = fmt.Sprintf("address = $%d AND", len(args))
+	}
+	return q, args
 }

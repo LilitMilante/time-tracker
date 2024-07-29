@@ -142,6 +142,6 @@ func (s *Service) TaskSpendTimesByUser(ctx context.Context, id uuid.UUID) ([]Tas
 	return spendTimesByUser, nil
 }
 
-func (s *Service) Users(ctx context.Context, page, perPage int) ([]User, error) {
-	return s.repo.Users(ctx, page, perPage)
+func (s *Service) Users(ctx context.Context, page, perPage int, filter UserFilter) ([]User, error) {
+	return s.repo.Users(ctx, page, perPage, filter)
 }

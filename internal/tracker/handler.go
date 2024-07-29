@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -222,7 +223,13 @@ func (h *Handler) Users(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	users, err := h.s.Users(ctx, page, perPage)
+	filter, err := parsUserFilter(r.URL.Query())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	users, err := h.s.Users(ctx, page, perPage, filter)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -234,4 +241,55 @@ func (h *Handler) Users(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func parsUserFilter(v url.Values) (f UserFilter, err error) {
+	idParam := v.Get("id")
+	if idParam != "" {
+		id, err := uuid.FromString(idParam)
+		if err != nil {
+			return UserFilter{}, err
+		}
+		f.ID = &id
+	}
+
+	pSeries := v.Get("passport_series")
+	if pSeries != "" {
+		series, err := strconv.Atoi(pSeries)
+		if err != nil {
+			return UserFilter{}, err
+		}
+		f.PassportSeries = &series
+	}
+
+	pNumber := v.Get("passport_number")
+	if pNumber != "" {
+		number, err := strconv.Atoi(pNumber)
+		if err != nil {
+			return UserFilter{}, err
+		}
+		f.PassportNumber = &number
+	}
+
+	surname := v.Get("surname")
+	if surname != "" {
+		f.Surname = &surname
+	}
+
+	name := v.Get("name")
+	if name != "" {
+		f.Name = &name
+	}
+
+	patronymic := v.Get("patronymic")
+	if patronymic != "" {
+		f.Patronymic = &patronymic
+	}
+
+	address := v.Get("address")
+	if address != "" {
+		f.Address = &address
+	}
+
+	return f, nil
 }
