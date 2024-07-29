@@ -195,3 +195,43 @@ func (h *Handler) TaskSpendTimesByUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (h *Handler) Users(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var err error
+
+	pageParam := r.URL.Query().Get("page")
+	perPageParam := r.URL.Query().Get("per_page")
+
+	page := 1
+	perPage := 20
+
+	if pageParam != "" {
+		page, err = strconv.Atoi(pageParam)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	if perPageParam != "" {
+		perPage, err = strconv.Atoi(perPageParam)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	users, err := h.s.Users(ctx, page, perPage)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(users)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}

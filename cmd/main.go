@@ -52,6 +52,7 @@ func main() {
 	router := http.NewServeMux()
 
 	router.HandleFunc("POST /users", handler.CreateUser)
+	router.HandleFunc("GET /users", handler.Users)
 	router.HandleFunc("PATCH /users", handler.UpdateUser)
 	router.HandleFunc("DELETE /users/{user_id}", handler.DeleteUser)
 	router.HandleFunc("GET /users/{user_id}/report", handler.TaskSpendTimesByUser)

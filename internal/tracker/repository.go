@@ -197,3 +197,44 @@ GROUP BY task_id ORDER BY sum_spend_time_sec DESC
 
 	return taskSpendTimes, rows.Err()
 }
+
+func (r *Repository) Users(ctx context.Context, page, perPage int) ([]User, error) {
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * perPage
+	}
+
+	q := `
+SELECT id, passport_series, passport_number, surname, name, patronymic, address, created_at
+FROM users WHERE deleted_at ISNULL ORDER BY created_at DESC OFFSET $1 LIMIT $2
+`
+
+	rows, err := r.db.Query(ctx, q, offset, perPage)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []User
+
+	for rows.Next() {
+		var user User
+		err = rows.Scan(
+			&user.ID,
+			&user.PassportSeries,
+			&user.PassportNumber,
+			&user.Surname,
+			&user.Name,
+			&user.Patronymic,
+			&user.Address,
+			&user.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, rows.Err()
+}
