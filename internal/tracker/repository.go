@@ -166,9 +166,9 @@ WHERE user_id = $1 AND task_id = $2 AND finished_at ISNULL`
 
 func (r *Repository) TaskSpendTimesByUser(ctx context.Context, id uuid.UUID) ([]TaskSpendTime, error) {
 	q := `
-SELECT task_id, SUM(spend_time_sec) FROM work_hours 
+SELECT task_id, SUM(spend_time_sec) sum_spend_time_sec FROM work_hours
 WHERE user_id = $1 AND finished_at IS NOT NULL
-GROUP BY task_id
+GROUP BY task_id ORDER BY sum_spend_time_sec DESC 
 `
 
 	rows, err := r.db.Query(ctx, q, id)
