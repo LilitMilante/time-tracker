@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	_ "time-tracker/docs"
+
 	"github.com/gofrs/uuid"
 )
 
@@ -25,6 +27,18 @@ type PassportNumber struct {
 	PassportNumber string `json:"passportNumber"`
 }
 
+// CreateUser godoc
+//
+//	@Summary		Create a new user
+//	@Description	Create a new user with passport number
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			passportNumber	body		PassportNumber	true	"Passport number in format '1234 567890'"
+//	@Success		200				{object}	User
+//	@Failure		400				{string}	string	"Invalid input"
+//	@Failure		500				{string}	string	"Internal error"
+//	@Router			/users [post]
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := ctx.Value(LoggerCtxKey{}).(*slog.Logger)
@@ -74,6 +88,19 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdateUser godoc
+//
+//	@Summary		Update an existing user
+//	@Description	Update user details
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		UpdateUser	true	"User to update"
+//	@Success		200		{object}	User
+//	@Failure		400		{string}	string	"Invalid input"
+//	@Failure		404		{string}	string	"User not found"
+//	@Failure		500		{string}	string	"Internal error"
+//	@Router			/users [patch]
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := ctx.Value(LoggerCtxKey{}).(*slog.Logger)
@@ -105,6 +132,18 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeleteUser godoc
+//
+//	@Summary		Delete a user
+//	@Description	Delete a user by ID
+//	@Tags			users
+//	@Produce		json
+//	@Param			user_id	path		string	true	"User ID"
+//	@Success		200		{string}	string	"User deleted"
+//	@Failure		400		{string}	string	"Invalid user ID"
+//	@Failure		404		{string}	string	"User not found"
+//	@Failure		500		{string}	string	"Internal error"
+//	@Router			/users/{user_id} [delete]
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -133,6 +172,18 @@ type StartWorkRequest struct {
 	TaskID uuid.UUID `json:"task_id"`
 }
 
+// StartWork godoc
+//
+//	@Summary		Start work on a task
+//	@Description	Start work on a task for a user
+//	@Tags			work
+//	@Accept			json
+//	@Produce		json
+//	@Param			startWorkRequest	body		StartWorkRequest	true	"Start work request"
+//	@Success		200					{string}	string				"Work started"
+//	@Failure		400					{string}	string				"Invalid input"
+//	@Failure		500					{string}	string				"Internal error"
+//	@Router			/work/start [post]
 func (h *Handler) StartWork(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -159,6 +210,19 @@ type FinishWorkRequest struct {
 	TaskID uuid.UUID `json:"task_id"`
 }
 
+// FinishWork godoc
+//
+//	@Summary		Finish work on a task
+//	@Description	Finish work on a task for a user
+//	@Tags			work
+//	@Accept			json
+//	@Produce		json
+//	@Param			finishWorkRequest	body		FinishWorkRequest	true	"Finish work request"
+//	@Success		200					{string}	string				"Work finished"
+//	@Failure		400					{string}	string				"Invalid input"
+//	@Failure		404					{string}	string				"Task not found"
+//	@Failure		500					{string}	string				"Internal error"
+//	@Router			/work/finish [post]
 func (h *Handler) FinishWork(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -185,6 +249,20 @@ func (h *Handler) FinishWork(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// TaskSpendTimesByUser godoc
+//
+//	@Summary		Get task spend times by user
+//	@Description	Get the time spent on tasks by a user within a specified period
+//	@Tags			tasks
+//	@Produce		json
+//	@Param			user_id		path		string	true	"User ID"
+//	@Param			start_date	query		string	false	"Start date in format 'DD-MM-YYYY'"
+//	@Param			end_date	query		string	false	"End date in format 'DD-MM-YYYY'"
+//	@Success		200			{object}	[]TaskSpendTime
+//	@Failure		400			{string}	string	"Invalid input"
+//	@Failure		404			{string}	string	"User or task not found"
+//	@Failure		500			{string}	string	"Internal error"
+//	@Router			/users/{user_id}/report [get]
 func (h *Handler) TaskSpendTimesByUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := ctx.Value(LoggerCtxKey{}).(*slog.Logger)
@@ -241,6 +319,25 @@ func (h *Handler) TaskSpendTimesByUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Users godoc
+//
+//	@Summary		Get users
+//	@Description	Get a list of users with optional filters
+//	@Tags			users
+//	@Produce		json
+//	@Param			page			query		int		false	"Page number"
+//	@Param			per_page		query		int		false	"Number of users per page"
+//	@Param			id				query		string	false	"User ID"
+//	@Param			passport_series	query		int		false	"Passport series"
+//	@Param			passport_number	query		int		false	"Passport number"
+//	@Param			surname			query		string	false	"Surname"
+//	@Param			name			query		string	false	"Name"
+//	@Param			patronymic		query		string	false	"Patronymic"
+//	@Param			address			query		string	false	"Address"
+//	@Success		200				{object}	[]User
+//	@Failure		400				{string}	string	"Invalid input"
+//	@Failure		500				{string}	string	"Internal error"
+//	@Router			/users [get]
 func (h *Handler) Users(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := ctx.Value(LoggerCtxKey{}).(*slog.Logger)

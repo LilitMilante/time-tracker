@@ -17,3 +17,6 @@ migrate-up:
 
 migrate-down:
 	goose -dir ./migrations postgres "user=postgres dbname=postgres password=dev host=localhost port=${db_port} sslmode=disable" down
+
+gen:
+	swag init -g internal/tracker/handler.go
