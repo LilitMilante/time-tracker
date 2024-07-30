@@ -19,3 +19,8 @@ type TaskSpendTime struct {
 	TaskID       uuid.UUID `json:"task_id"`
 	SpendTimeSec int       `json:"spend_time_sec"`
 }
+
+type Period struct {
+	StartDate time.Time
+	EndDate   time.Time
+}

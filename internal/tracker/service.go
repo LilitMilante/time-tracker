@@ -129,8 +129,8 @@ func (s *Service) FinishWork(ctx context.Context, userID, taskID uuid.UUID) erro
 	return nil
 }
 
-func (s *Service) TaskSpendTimesByUser(ctx context.Context, id uuid.UUID) ([]TaskSpendTime, error) {
-	spendTimesByUser, err := s.repo.TaskSpendTimesByUser(ctx, id)
+func (s *Service) TaskSpendTimesByUser(ctx context.Context, id uuid.UUID, period Period) ([]TaskSpendTime, error) {
+	spendTimesByUser, err := s.repo.TaskSpendTimesByUser(ctx, id, period)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			return nil, ErrNotFound

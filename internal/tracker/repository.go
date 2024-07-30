@@ -164,14 +164,14 @@ WHERE user_id = $1 AND task_id = $2 AND finished_at ISNULL`
 	return wh, nil
 }
 
-func (r *Repository) TaskSpendTimesByUser(ctx context.Context, id uuid.UUID) ([]TaskSpendTime, error) {
+func (r *Repository) TaskSpendTimesByUser(ctx context.Context, id uuid.UUID, period Period) ([]TaskSpendTime, error) {
 	q := `
 SELECT task_id, SUM(spend_time_sec) sum_spend_time_sec FROM work_hours
-WHERE user_id = $1 AND finished_at IS NOT NULL
+WHERE user_id = $1 AND finished_at IS NOT NULL AND finished_at BETWEEN $2 AND $3
 GROUP BY task_id ORDER BY sum_spend_time_sec DESC 
 `
 
-	rows, err := r.db.Query(ctx, q, id)
+	rows, err := r.db.Query(ctx, q, id, period.StartDate, period.EndDate)
 	if err != nil {
 		return nil, err
 	}

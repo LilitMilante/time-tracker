@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofrs/uuid"
 )
@@ -172,6 +173,7 @@ func (h *Handler) FinishWork(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) TaskSpendTimesByUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	var err error
 
 	id, err := uuid.FromString(r.PathValue("user_id"))
 	if err != nil {
@@ -179,7 +181,33 @@ func (h *Handler) TaskSpendTimesByUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	spendTimesByUser, err := h.s.TaskSpendTimesByUser(ctx, id)
+	startDate := r.URL.Query().Get("start_date")
+	endDate := r.URL.Query().Get("end_date")
+
+	var period Period
+
+	if startDate != "" {
+		period.StartDate, err = time.Parse("02-01-2006", startDate)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	if endDate != "" {
+		period.EndDate, err = time.Parse("02-01-2006", endDate)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	if period.StartDate.Equal(period.EndDate) {
+		// to get values by one day (with the same dates)
+		period.EndDate = period.EndDate.Add(time.Hour * 24)
+	}
+
+	spendTimesByUser, err := h.s.TaskSpendTimesByUser(ctx, id, period)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			http.Error(w, err.Error(), http.StatusNotFound)
