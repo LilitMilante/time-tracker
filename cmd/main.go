@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,6 +24,11 @@ import (
 
 func main() {
 	ctx := context.Background()
+	l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource:   false,
+		Level:       slog.LevelDebug,
+		ReplaceAttr: nil,
+	}))
 
 	cfg, err := app.NewConfig(".env")
 	if err != nil {
@@ -34,20 +40,26 @@ func main() {
 		log.Fatal(err)
 	}
 
+	l.Info("ping Postgres...")
 	err = db.Ping(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
+	l.Info("ping Postgres OK")
 
+	l.Info("up migrations...")
 	err = upMigrations(cfg.PostgresDSN)
 	if err != nil {
 		log.Panic(err)
 	}
+	l.Info("up migrations OK")
 
 	repo := tracker.NewRepository(db)
 	service := tracker.NewService(repo, cfg.APIURL)
 	handler := tracker.NewHandler(service)
+
+	mw := tracker.NewMiddleware(l)
 
 	router := http.NewServeMux()
 
@@ -62,7 +74,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%d", cfg.Port),
-		Handler:           router,
+		Handler:           mw.Log(router),
 		ReadTimeout:       time.Second * 3,
 		ReadHeaderTimeout: time.Second,
 	}
@@ -73,6 +85,8 @@ func main() {
 			log.Panic(err)
 		}
 	}()
+
+	l.Info("server started!", "port", cfg.Port)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGKILL)

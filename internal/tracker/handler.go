@@ -3,6 +3,7 @@ package tracker
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -26,6 +27,7 @@ type PassportNumber struct {
 
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := ctx.Value(LoggerCtxKey{}).(*slog.Logger)
 
 	var req PassportNumber
 
@@ -66,6 +68,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	err = h.s.CreateUser(ctx, passportSeries, passportNumber)
 	if err != nil {
+		l.Error("create user", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -73,6 +76,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := ctx.Value(LoggerCtxKey{}).(*slog.Logger)
 
 	var updUser UpdateUser
 
@@ -84,6 +88,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.s.UpdateUser(ctx, updUser)
 	if err != nil {
+		l.Error("update user", "error", err)
 		if errors.Is(err, ErrNotFound) {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -103,6 +108,8 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	l := ctx.Value(LoggerCtxKey{}).(*slog.Logger)
+
 	id, err := uuid.FromString(r.PathValue("user_id"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -111,6 +118,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	err = h.s.DeleteUser(ctx, id)
 	if err != nil {
+		l.Error("delete user", "error", err)
 		if errors.Is(err, ErrNotFound) {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -128,6 +136,8 @@ type StartWorkRequest struct {
 func (h *Handler) StartWork(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	l := ctx.Value(LoggerCtxKey{}).(*slog.Logger)
+
 	var req StartWorkRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -138,6 +148,7 @@ func (h *Handler) StartWork(w http.ResponseWriter, r *http.Request) {
 
 	err = h.s.StartWork(ctx, req.UserID, req.TaskID)
 	if err != nil {
+		l.Error("start work", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -151,6 +162,8 @@ type FinishWorkRequest struct {
 func (h *Handler) FinishWork(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	l := ctx.Value(LoggerCtxKey{}).(*slog.Logger)
+
 	var req FinishWorkRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -161,6 +174,7 @@ func (h *Handler) FinishWork(w http.ResponseWriter, r *http.Request) {
 
 	err = h.s.FinishWork(ctx, req.UserID, req.TaskID)
 	if err != nil {
+		l.Error("finish work", "error", err)
 		if errors.Is(err, ErrNotFound) {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -173,6 +187,7 @@ func (h *Handler) FinishWork(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) TaskSpendTimesByUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := ctx.Value(LoggerCtxKey{}).(*slog.Logger)
 	var err error
 
 	id, err := uuid.FromString(r.PathValue("user_id"))
@@ -209,6 +224,7 @@ func (h *Handler) TaskSpendTimesByUser(w http.ResponseWriter, r *http.Request) {
 
 	spendTimesByUser, err := h.s.TaskSpendTimesByUser(ctx, id, period)
 	if err != nil {
+		l.Error("get task spend times by user", "error", err)
 		if errors.Is(err, ErrNotFound) {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -227,6 +243,7 @@ func (h *Handler) TaskSpendTimesByUser(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Users(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	l := ctx.Value(LoggerCtxKey{}).(*slog.Logger)
 	var err error
 
 	pageParam := r.URL.Query().Get("page")
@@ -259,6 +276,7 @@ func (h *Handler) Users(w http.ResponseWriter, r *http.Request) {
 
 	users, err := h.s.Users(ctx, page, perPage, filter)
 	if err != nil {
+		l.Error("get users", "errors", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
