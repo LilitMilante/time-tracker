@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid"
 )
 
 type Middleware struct {
@@ -22,7 +22,7 @@ type LoggerCtxKey struct{}
 
 func (m *Middleware) Log(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		l := m.l.With("request_id", uuid.New())
+		l := m.l.With("request_id", uuid.Must(uuid.NewV4()))
 
 		l.Info("incoming request", "method", r.Method, "url", r.URL.String(), "from", r.RemoteAddr)
 
